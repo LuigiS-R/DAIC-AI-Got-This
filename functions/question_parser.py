@@ -1,30 +1,34 @@
-import requests
 import os
+import requests
 import re
 from bs4 import BeautifulSoup
 import json
-
-API_KEY = "up_ccmWZgpXz48pkPgFVRZnW0bq0dT03"  
-DOC_URL = "https://api.upstage.ai/v1/document-digitization"
-HEADERS = {"Authorization": f"Bearer {API_KEY}"}
 
 def parse_exam_document(file_path):
     """
     Uploads a document file (e.g., PDF or DOCX) to Upstage Document Parser API
     and returns the parsed JSON response.
+    API key is read from environment variable UPSTAGE_API_KEY.
     """
+    api_key = "up_0xiZGIC9T6of93SeqWgJjTpirVr2n"
+    if not api_key:
+        raise EnvironmentError("Missing UPSTAGE_API_KEY environment variable.")
+
     if not os.path.isfile(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
+
+    DOC_URL = "https://api.upstage.ai/v1/document-digitization"
+    headers = {"Authorization": f"Bearer {api_key}"}
 
     with open(file_path, "rb") as f:
         files = {"document": f}
         data = {
-            "ocr": "false",  
+            "ocr": "false",
             "base64_encoding": "['table']",
             "model": "document-parse"
         }
 
-        response = requests.post(DOC_URL, headers=HEADERS, files=files, data=data)
+        response = requests.post(DOC_URL, headers=headers, files=files, data=data)
         response.raise_for_status()
         return response.json()
 
@@ -98,10 +102,3 @@ def flatten_questions(parsed_json):
         flat_questions.append(question_obj)
 
     return flat_questions
-
-# Example usage
-if __name__ == "__main__":
-    file_path = "./exam_memo.docx"  # Replace with your actual file path
-    parsed = parse_exam_document(file_path)
-    questions = flatten_questions(parsed)
-    print(json.dumps({"questions": questions}, ensure_ascii=False, indent=2))
