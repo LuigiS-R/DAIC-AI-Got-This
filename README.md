@@ -45,8 +45,11 @@ Upstage Document Parser API는 학생 시험지, 강의 자료 등의 문서를 
 
 ## 🖼️ 데모
 > 스크린샷이나 데모 영상(GIF 또는 구글 드라이브 링크 등)을 포함해주세요.
-- 예시:  
-  ![데모 스크린샷](./assets/demo.png)
+- Description of Scenario: This system is designed to be used in the education field, particulary at university.
+1) It can be used to grade exams such as midterms or finals, the person in charge of grading the exam papers must upload the student's exam papers altogether with the answer key of the exam. Then all of these files are then uploaded to the website's backend server, and later they are send as input to our python grading module. The grading module will grade the each exam paper using certain logic combined with Upstage Solar LLM, and finally it returns the final score for each exam paper. The backend will then retrieve the output of the grading module, store the scores of each student in a database and finally it will display all this info in the website.
+
+2) It can be used to generate exams, the person in charge of creating the exam has the option to submit the lecture materials to the website, then this materials (.pdf, .jpeg, .word) are then uploaded to the backend server where they will later be sent to Upstage Document Parse API so they can be summarized so they can be processed and converted into different questions that are going to be used to create the exam paper. Summarization and question generation process is done inside a exam_generator module developed in Python. After getting the questions, the person in charge can modify the given questions, or even add more if he wishes, to finally create the PDF file of the exam paper and allowing the user of the system to download it.
+
 
 ## 🔬 기술 구현 요약
 > 사용한 AI 모델이나 파이프라인, 적용 기술을 작성해주세요.
