@@ -55,8 +55,7 @@ let answerKeyFilePath = null;
 
 app.post("/answerKey/upload", uploadAnswerKey.single("answerKey"), (req, res) => {
     answerKeyFilePath = req.file.path;
-    //file = fs.createReadStream(req.file.path);
-    //Making post request to grading module
+    res.end();
 })
 
 
@@ -93,12 +92,10 @@ app.post("/examPapers/upload", uploadStudentExam.array("examPapers", 60), async 
             if (err){
                 res.send("ERROR");
             }
-            else{
-                res.send("Insertion completed")
-            }
         })
     }
     console.log("Database completed");
+    res.send(finalArray);
 })
 
 app.get("/scores/check", (req, res) =>{
@@ -151,33 +148,6 @@ app.post("/login", (req, res) =>{
     })
 })
 
-//Function for splitting files
-async function splitPDF(path, pages){
-    const pdfBytes = fs.readFileSync(path);
-    const originalPDF = await PDFDocument.load(pdfBytes);
-
-    const totalPages = originalPDF.getPageCount();
-    let chunkIndex = 0;
-
-    const fileName = path.parse(path).name;
-    for(let i = 0; i<totalPages; i+=pages){
-        const newPDF = await PDFDocument.create();
-        const end = (i + pages) < totalPages? i + pages:totalPages;
-
-        const pagesToCopy = await newPDF.copyPages(originalPDF, [...Array(end - i).keys()].map(x => x + i));
-        pagesToCopy.forEach(p => newPDF.addPage(p));
-
-        const newPDFbytes = await newPDF.save();
-        const outputPath = `./${fileName}_chunks/chunk_${chunkIndex + 1}.pdf`;
-        fs.writeFileSync(outputPath, newPDFbytes);
-
-        console.log(`Created: ${outputPath}`);
-        chunkIndex++;
-    }
-
-    return chunkIndex;
-}
-// path.parse(path).name
 app.listen(3000, (req, res)=>{
     console.log("App listening at 3000");
 })
