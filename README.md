@@ -10,7 +10,7 @@
 
 ```md
 # [프로젝트 이름]
-Automatic Grading and Exam Generator System
+Grade Genie
 
 ## 📌 개요
 Document Parse과 AI 기술을 활용하여 강의 자료를 기반으로 학생이 작셩한 학교 시험 답안을 자동 평가하고 시험지를 자동 생성할 수 있는 서비스입니다.
@@ -51,8 +51,54 @@ Upstage Document Parser API는 학생 시험지, 강의 자료 등의 문서를 
 ## 🔬 기술 구현 요약
 > 사용한 AI 모델이나 파이프라인, 적용 기술을 작성해주세요.
 
+- Exam Generation Pipeline
+Document Parsing - The system uses Upstage Document Parsing tool to perform extraction of structured HTML content from the uploaded PDF lecture slides
+HTML Preprocessing - HTML Content is additionally cleaned up using BeautifullSoup and then split into logical slide-like sections for further processing
+
+Summarization – Each subsequent section is summarized using prompt-engineered calls to the Solar AI (solar-pro model). This summarization is batch-processed and executed asynchronously and in parallel using *ThreadPoolExecutor* and *asyncio*, reducing delays and enabling efficient document processing.
+
+Question Generation with Dynamic Prompting - Based on the slide summary JSON, questions are dynamically generated using prompt-engineered calls to the Solar AI (solar-pro model). The result is a clean, type-consistent JSON output categorized into multiple-choice, true/false, short answer, and essay formats each paired with answers.
+
+- Exam Grading Pipeline
+Answer Key Extraction - The system uses Upstage Document Parsing tool to perform extraction of the answer keys provided by the professor. Answers are automatically categorized into 4 sections (MCQ, T/F, Numerical an Short Answer)
+
+Student Answer Extracton - The system uses Upstage Document OCR in order to scan the image versions of the answers and convert into machine-readable JSON
+
+Extraction of answers - Since the output may be unstructured or noisy, prompt engineering with solar-pro language model is used. Together, OCR and prompt-based structuring form a robust pipeline for convering messy student answers sheets into clean data.
+
+AI-Powered Grading Logic -  Grading is automatically handled based on the type of answer:
+
+MCQ & True/False: Evaluated through case-insensitive direct comparison.
+
+Numerical: Supports value matching with tolerance. For example, if the correct answer is 12 but the OCR/extraction system reads it as 1 2, full credit is still awarded.
+
+Short Answer: Graded using semantic similarity scoring via prompt-based evaluation with Solar AI. This returns a confidence score ranging from 0.0 to 1.0. The scoring leverages large language models (LLMs) that apply contextual understanding and natural language inference to assess the quality of the response.
+
 ## 🧰 기술 스택 및 시스템 아키텍처
 > 사용한 언어 및 프레임워크를 작성하고 시스템 아키텍처 이미지를 첨부해주세요.
+
+Frontend: HTML, CSS (pure/static)
+Backend: Node.js (Express)
+Database: SQLite3 (file-based local DB)
+API Protocol: RESTful (handling GET and POST requests)
+External Services: Upstage APIs (Document OCR & Parsing), OpenAI API (for Solar AI)
+AI Models: Solar AI (accessed via Upstage's solar-pro model using Python)
+Storage: Local file system (for PDFs, JSONs, cache)
+AI Logic: Implemented in Python (FastAPI), integrated into Node.js backend
+Concurrency: Asynchronous + parallel processing using asyncio and ThreadPoolExecutor
+Prompt Engineering: Used extensively for summarization, question generation, answer parsing, and grading
+
+[User (Browser)]
+      ↓
+ [HTML/CSS Frontend]
+      ↓
+  [Node.js Backend]
+      ↓            ↘
+[SQLite3 DB]   [Python AI Module]
+      ↓          ↙          ↘        ↘
+[Local File Storage]   [OpenAI API]   [Upstage API]
+                             ↓
+                        [Solar AI]
 
 ## 🔧 설치 및 사용 방법
 > 리포지토리 클론 이후 application을 실행할 수 있는 명령어를 작성해주세요.
@@ -61,9 +107,11 @@ Upstage Document Parser API는 학생 시험지, 강의 자료 등의 문서를 
 > 아래는 예시입니다.
 
 \```bash
-git clone https://github.com/your-username/project-name.git
-cd project-name
+git clone https://github.com/LuigiS-R/DAIC-AI-Got-This.git
+cd DAIC-AI-Got-This
 pip install -r requirements.txt
+npm install
+npm start
 \```
 
 ## 📁 프로젝트 구조
@@ -72,16 +120,30 @@ pip install -r requirements.txt
 > 아래는 예시입니다.
 
 \```bash
-project-name/
-├── README.md               # 프로젝트 설명서
-├── app.py                  # 애플리케이션 메인 파일
-├── src/                    # 핵심 로직, 파이프라인, 유틸리티 등
-│   ├── model.py
-│   └── utils.py
-├── models/                 # 모델 체크포인트 및 학습된 가중치
-├── assets/                 # 이미지, 동영상, 샘플 출력 등
-├── data/                   # 샘플 입력/출력 데이터
-└── tests/                  # 테스트 코드
+DAIC-AI-GOT-THIS/
+├── app.js                    # Main Node.js server for routing
+├── database/                 # Node.js service for DB operations
+│   └── server.js             # Database service entry point
+├── db/
+│   └── database.js           # SQLite database logic
+├── exam-generator-api/       # FastAPI app for summarization & question generation
+│   ├── generator.py          # Core logic for generation of exam
+│   ├── main.py               # FastAPI entry point
+│   └── render.yaml           # Deployment config for Render
+├── exam-grader-api/          # FastAPI app for grading student answers
+│   ├── exam_grader.py        # Grading logic
+│   ├── main.py               # FastAPI entry point
+│   └── render.yaml           # Deployment config for Render
+├── exam_grader.py            # (Optional) Shared grading script or duplicate
+├── myDatabase.db             # SQLite database file
+├── package.json              # Node.js dependencies
+├── public/                   # Static frontend files (HTML/CSS/JS)
+│   ├── index.html            # Main UI
+│   └── style.css, app.js     # Styling and interactivity
+├── README.md                 # Project documentation
+├── server.js                 # Main Express server for serving frontend/API
+└── requirements.txt          # Python dependencies
+
 \```
 
 ## 🧑‍🤝‍🧑 팀원 소개
@@ -90,10 +152,10 @@ project-name/
 
 | 이름  | 역할          | GitHub                                       |
 | --- | ----------- | -------------------------------------------- |
-| 루이스  | 팀장 / 백엔드 개발  | [@developer1](https://github.com/developer1)     |
-| 아딜렛  | AI 모델 개발       | [@developer2](https://github.com/developer2)     |
-| 안드레아 | AI 모델 개발      | [@developer3](https://github.com/developer3)     |
-| 자르갈  | 프론트엔드 개발     | [@designer1](https://github.com/designer1)       |
+| 루이스  | 팀장 / 백엔드 개발  | [@developer1](https://github.com/LuigiS-R)     |
+| 아딜렛  | AI 모델 개발       | [@developer2](https://github.com/equkid)     |
+| 안드레아 | AI 모델 개발      | [@developer3](https://github.com/andreamna)     |
+| 자르갈  | 프론트엔드 개발     | [@designer1](https://github.com/Tuvshinjargal03)       |
 
 ## 💡 참고 자료 및 아이디어 출처 (Optional)
 > 프로젝트를 개발하면서 참고했던 논문 및 기타 문헌이 있으시다면 첨부해주세요.
@@ -103,6 +165,3 @@ project-name/
 * [Upstage Building end-to-end RAG system using Solar LLM and MongoDB Atlas](https://www.upstage.ai/blog/en/building-rag-system-using-solar-llm-and-mongodb-atlas)
 
 ```
-
- 
-
